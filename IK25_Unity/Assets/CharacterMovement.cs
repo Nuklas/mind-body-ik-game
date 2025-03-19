@@ -69,6 +69,7 @@ public class CharacterMovement : MonoBehaviour
         // moveSpeed *= 0.5f;
     }
 
+    /**
     void DealDamage() {
         // Check if enemy is still in range
         float distanceToEnemy = Vector3.Distance(transform.position, player.position);
@@ -82,6 +83,7 @@ public class CharacterMovement : MonoBehaviour
             }
         }
     }
+    **/
     
     private void EndAttack()
     {
