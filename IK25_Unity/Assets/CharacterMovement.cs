@@ -69,7 +69,12 @@ public class CharacterMovement : MonoBehaviour
         // moveSpeed *= 0.5f;
     }
 
+<<<<<<< HEAD
     /** void DealDamage() {
+=======
+    /**
+    void DealDamage() {
+>>>>>>> 28c9d87dc5a80c44db13bc620c8c335d4cb0d00b
         // Check if enemy is still in range
         float distanceToEnemy = Vector3.Distance(transform.position, player.position);
         if (distanceToPlayer <= attackRange)
@@ -81,7 +86,12 @@ public class CharacterMovement : MonoBehaviour
                 playerHealth.TakeDamage(damage);
             }
         }
+<<<<<<< HEAD
     } **/
+=======
+    }
+    **/
+>>>>>>> 28c9d87dc5a80c44db13bc620c8c335d4cb0d00b
     
     private void EndAttack()
     {
