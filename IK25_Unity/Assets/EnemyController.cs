@@ -6,6 +6,7 @@ public class EnemyController : MonoBehaviour
     public float health = 100f;
     public float damage = 10f;
     public float attackRange = 1.5f;
+    public float damageRange = 2f;
     public float detectionRange = 10f;
     public float attackCooldown = 2f;
 
@@ -84,10 +85,12 @@ public class EnemyController : MonoBehaviour
         {
             animator.SetTrigger("Attack");
         }
-        
+    }
+
+    void DealDamage() {
         // Check if player is still in range
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-        if (distanceToPlayer <= attackRange)
+        if (distanceToPlayer <= damageRange)
         {
             // Damage player
             PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
