@@ -5,7 +5,7 @@ public class PlayerHealth : MonoBehaviour
 {
     public float maxHealth = 100f;
     public float currentHealth;
-    public Image healthBar; // Optional UI health bar
+    public Slider healthBarSlider; // Reference to the Slider
     private Animator animator; // Declare the Animator variable
 
 
@@ -34,13 +34,12 @@ public class PlayerHealth : MonoBehaviour
             Die();
         }
     }
-    
+
     void UpdateHealthBar()
     {
-        // Update health bar if assigned
-        if (healthBar != null)
+        if (healthBarSlider != null)
         {
-            healthBar.fillAmount = currentHealth / maxHealth;
+            healthBarSlider.value = currentHealth / maxHealth;
         }
     }
     

@@ -10,6 +10,7 @@ public class WordKnightGame : MonoBehaviour
     public GameObject knightPrefab;
     public Transform[] spawnPoints;
     public float spawnDelay = 0.5f;
+    public int depth = 5;
     public KeyCode nextWaveKey = KeyCode.Space;
     
     [Header("Last Knight Ascension")]
@@ -317,7 +318,7 @@ public class WordKnightGame : MonoBehaviour
         playerWordLabel.text = currentPlayerWord;
         
         // Find a goal word that's 5 connections away
-        goalWord = FindGoalWord(currentPlayerWord, 5);
+        goalWord = FindGoalWord(currentPlayerWord, depth);
         if (goalWord == null)
         {
             Debug.LogError("Could not find a goal word that is 5 connections away.");
@@ -548,6 +549,7 @@ public class WordKnightGame : MonoBehaviour
         {
             Debug.Log("Goal word reached! Game completed!");
             // Add game completion logic here
+            goalText.text = "You Won!";
         }
     }
     
