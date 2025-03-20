@@ -229,7 +229,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5ff733a6edc943518a611090f81d874, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 40
+  maxHealth: 100
   currentHealth: 0
   healthBar: {fileID: 0}
 --- !u!114 &258859390
@@ -414,6 +414,59 @@ MonoBehaviour:
   m_MinRegionArea: 2
   m_NavMeshData: {fileID: 23800000, guid: 874c91402b54147a7a06d8597ee5b408, type: 2}
   m_BuildHeightMesh: 0
+--- !u!1 &390627672
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 390627674}
+  - component: {fileID: 390627673}
+  m_Layer: 0
+  m_Name: WordKnightGame
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &390627673
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 390627672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3433fb7384cd34a28b8514e7fea61b84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerObject: {fileID: 258859383}
+  knightPrefab: {fileID: 5286330300183253114, guid: 996663518672e4a8ea800c505d2d9045, type: 3}
+  spawnPoints:
+  - {fileID: 1021123097}
+  spawnDelay: 2
+  nextWaveKey: 32
+  ascensionHeight: 20
+  ascensionDuration: 2
+  fadeOutDuration: 1
+--- !u!4 &390627674
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 390627672}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4.5822372, y: -15.026363, z: 27.949585}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &568534365
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -466,13 +519,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Knight
       objectReference: {fileID: 0}
+    - target: {fileID: 5286330300183253114, guid: 996663518672e4a8ea800c505d2d9045, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8793941709646362431, guid: 996663518672e4a8ea800c505d2d9045, type: 3}
+      propertyPath: detectionRange
+      value: 10
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 1650804217271137717, guid: 996663518672e4a8ea800c505d2d9045, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 996663518672e4a8ea800c505d2d9045, type: 3}
 --- !u!1001 &734071592
 PrefabInstance:
@@ -1022,6 +1080,7 @@ GameObject:
   - component: {fileID: 1509765695}
   - component: {fileID: 1509765694}
   - component: {fileID: 1509765697}
+  - component: {fileID: 1509765698}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1147,6 +1206,23 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!114 &1509765698
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1509765693}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e28baa7b9cb8482b8e61a4d8407a251, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 258859384}
+  smoothSpeed: 10
+  offset: {x: 0, y: 8, z: -5.5}
+  lookOffset: {x: 0, y: 0, z: 0}
+  rotationAngles: {x: 45, y: 0, z: 0}
 --- !u!1 &1648909888 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 4e0d4f6182c0346ac8ea98226e1c5779, type: 3}
@@ -1269,64 +1345,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1648909890}
   m_SourcePrefab: {fileID: 100100000, guid: 4e0d4f6182c0346ac8ea98226e1c5779, type: 3}
---- !u!1 &1947589675
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1947589677}
-  - component: {fileID: 1947589676}
-  m_Layer: 0
-  m_Name: WaveManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1947589676
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1947589675}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8307cb3d459b145c29d458844491a2d7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  waves:
-  - waveName: 
-    enemyPrefab: {fileID: 5286330300183253114, guid: 996663518672e4a8ea800c505d2d9045, type: 3}
-    enemyCount: 3
-    spawnDelay: 0
-    spawnPoints:
-    - {fileID: 1021123097}
-  - waveName: 
-    enemyPrefab: {fileID: 5286330300183253114, guid: 996663518672e4a8ea800c505d2d9045, type: 3}
-    enemyCount: 3
-    spawnDelay: 0
-    spawnPoints:
-    - {fileID: 1021123097}
-  spawnKey: 32
---- !u!4 &1947589677
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1947589675}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2013652537
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1590,6 +1608,6 @@ SceneRoots:
   - {fileID: 734071592}
   - {fileID: 937009224}
   - {fileID: 2013652537}
-  - {fileID: 1947589677}
   - {fileID: 1021123097}
   - {fileID: 568534365}
+  - {fileID: 390627674}

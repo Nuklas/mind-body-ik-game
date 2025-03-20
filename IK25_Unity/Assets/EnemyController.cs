@@ -142,6 +142,6 @@ public class EnemyController : MonoBehaviour
         }
         
         // Destroy after delay
-        Destroy(gameObject, 10f);
+        Destroy(gameObject, 1f);
     }
 }

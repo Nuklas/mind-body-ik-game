@@ -1,0 +1,517 @@
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+
+[System.Serializable]
+public class WordKnightGame : MonoBehaviour
+{
+    public GameObject playerObject;
+    public GameObject knightPrefab;
+    public Transform[] spawnPoints;
+    public float spawnDelay = 0.5f;
+    public KeyCode nextWaveKey = KeyCode.Space;
+    
+    [Header("Last Knight Ascension")]
+    public float ascensionHeight = 10f;
+    public float ascensionDuration = 2f;
+    public float fadeOutDuration = 1f;
+    
+    private Dictionary<string, List<string>> wordNetwork;
+    private string currentPlayerWord;
+    private string goalWord;
+    private bool isSpawning = false;
+    private TextMeshPro playerWordLabel;
+    private List<GameObject> activeKnights = new List<GameObject>();
+    
+    void Start()
+    {
+        InitializeWordNetwork();
+        playerWordLabel = playerObject.GetComponentInChildren<TextMeshPro>();
+        
+        if (playerWordLabel == null)
+        {
+            Debug.LogError("Player object must have a TextMeshPro component as a child!");
+            return;
+        }
+        
+        // Pick random starting word for player
+        ChooseStartingWords();
+    }
+    
+    void Update()
+    {
+        // Check for key press to spawn next wave of word knights
+        if (Input.GetKeyDown(nextWaveKey) && !isSpawning && activeKnights.Count == 0)
+        {
+            StartCoroutine(SpawnWordKnights());
+        }
+        
+        // Check if only one knight remains
+        CheckLastKnightRemaining();
+    }
+    
+    private void InitializeWordNetwork()
+    {
+        wordNetwork = new Dictionary<string, List<string>>
+        {
+            { "kitchen",      new List<string>{ "table", "food", "chef", "oven", "dinner", "recipe", "oven", "stove", "microwave", "refrigerator" } },
+            { "table",        new List<string>{ "kitchen", "chair", "dinner", "restaurant", "lamp" } },
+            { "book",         new List<string>{ "library", "learning", "teacher", "knowledge" } },
+            { "library",      new List<string>{ "book", "learning", "teacher", "university" } },
+            { "chair",        new List<string>{ "table", "sofa", "home", "room" } },
+            { "sofa",         new List<string>{ "chair", "tv", "bed", "home" } },
+            { "tv",           new List<string>{ "movie", "news", "internet", "sofa" } },
+            { "movie",        new List<string>{ "tv", "video", "news", "sound", "camera" } },
+            { "restaurant",   new List<string>{ "dinner", "food", "chef", "table", "market", "money", "coffee", "beer", "lunch" } },
+            { "dinner",       new List<string>{ "restaurant", "food", "kitchen", "table", "wine", "supper" } },
+            { "food",         new List<string>{ "kitchen", "dinner", "fruit", "market", "restaurant", "soda", "wine" } },
+            { "fruit",        new List<string>{ "food", "market", "juice", "dessert" } },
+            { "market",       new List<string>{ "food", "fruit", "money", "restaurant", "country" } },
+            { "money",        new List<string>{ "market", "job", "office", "restaurant" } },
+            { "job",          new List<string>{ "money", "office", "meeting", "computer", "coffee" } },
+            { "office",       new List<string>{ "job", "meeting", "computer", "money" } },
+            { "meeting",      new List<string>{ "office", "job", "computer", "news" } },
+            { "computer",     new List<string>{ "office", "internet", "job", "meeting", "technology" } },
+            { "internet",     new List<string>{ "computer", "news", "tv", "app" } },
+            { "news",         new List<string>{ "internet", "tv", "movie", "world", "meeting" } },
+            { "world",        new List<string>{ "news", "travel", "culture", "history", "planet" } },
+            { "travel",       new List<string>{ "world", "airplane", "trip", "explore", "beach", "road", "bicycle" } },
+            { "airplane",     new List<string>{ "travel", "airport", "trip", "journey" } },
+            { "airport",      new List<string>{ "airplane", "trip", "travel", "map" } },
+            { "trip",         new List<string>{ "travel", "airplane", "journey", "beach", "airport", "holiday" } },
+            { "beach",        new List<string>{ "ocean", "sun", "trip", "travel" } },
+            { "ocean",        new List<string>{ "beach", "boat", "sailing", "water" } },
+            { "boat",         new List<string>{ "ocean", "sailing", "wind", "water" } },
+            { "sailing",      new List<string>{ "boat", "wind", "ocean", "trip" } },
+            { "wind",         new List<string>{ "sailing", "boat", "storm", "rain" } },
+            { "storm",        new List<string>{ "wind", "rain", "umbrella", "ocean" } },
+            { "rain",         new List<string>{ "storm", "umbrella", "water", "wind" } },
+            { "umbrella",     new List<string>{ "rain", "storm", "sun", "water" } },
+            { "sun",          new List<string>{ "day", "beach", "umbrella", "time" } },
+            { "day",          new List<string>{ "sun", "time", "light", "world" } },
+            { "time",         new List<string>{ "day", "history", "universe", "journey", "sun", "watch" } },
+            { "history",      new List<string>{ "time", "civilization", "culture", "world" } },
+            { "civilization", new List<string>{ "history", "culture", "city", "country" } },
+            { "culture",      new List<string>{ "civilization", "art", "history", "world" } },
+            { "art",          new List<string>{ "culture", "painting", "gallery", "museum" } },
+            { "painting",     new List<string>{ "art", "gallery", "museum", "knowledge" } },
+            { "gallery",      new List<string>{ "painting", "museum", "art", "knowledge" } },
+            { "museum",       new List<string>{ "gallery", "art", "history", "learning" } },
+            { "learning",     new List<string>{ "school", "teacher", "book", "knowledge", "library" } },
+            { "school",       new List<string>{ "learning", "teacher", "students", "university" } },
+            { "teacher",      new List<string>{ "school", "learning", "book", "knowledge", "library" } },
+            { "students",     new List<string>{ "school", "teacher", "university", "knowledge" } },
+            { "university",   new List<string>{ "school", "professor", "knowledge", "learning", "library" } },
+            { "professor",    new List<string>{ "university", "knowledge", "learning", "book" } },
+            { "knowledge",    new List<string>{ "book", "learning", "teacher", "university", "painting", "gallery", "mind", "infinity" } },
+            { "car",          new List<string>{ "road", "highway", "engine", "fuel" } },
+            { "road",         new List<string>{ "car", "highway", "bridge", "travel" } },
+            { "highway",      new List<string>{ "road", "car", "bridge", "speed" } },
+            { "bridge",       new List<string>{ "road", "highway", "town", "city" } },
+            { "town",         new List<string>{ "bridge", "city", "village", "country" } },
+            { "city",         new List<string>{ "bridge", "town", "village", "civilization", "park", "bus" } },
+            { "village",      new List<string>{ "town", "city", "country", "home" } },
+            { "country",      new List<string>{ "village", "civilization", "city", "market" } },
+            { "mountain",     new List<string>{ "hill", "forest", "river", "nature" } },
+            { "hill",         new List<string>{ "mountain", "village", "road", "forest" } },
+            { "river",        new List<string>{ "lake", "forest", "water", "nature", "mountain" } },
+            { "lake",         new List<string>{ "river", "forest", "water", "park" } },
+            { "forest",       new List<string>{ "tree", "river", "mountain", "nature" } },
+            { "tree",         new List<string>{ "forest", "flower", "wood", "nature" } },
+            { "flower",       new List<string>{ "tree", "garden", "park", "nature", "scent" } },
+            { "garden",       new List<string>{ "flower", "tree", "park", "home" } },
+            { "park",         new List<string>{ "garden", "lake", "nature", "city", "walk", "bird", "nature" } },
+            { "nature",       new List<string>{ "forest", "river", "tree", "mountain", "park" } },
+            { "wildlife",     new List<string>{ "animal", "forest", "nature", "park", "elephant", "bear" } },
+            { "animal",       new List<string>{ "wildlife", "dog", "cat", "bird", "fish" } },
+            { "dog",          new List<string>{ "animal", "cat", "house", "park" } },
+            { "cat",          new List<string>{ "dog", "animal", "house", "bird" } },
+            { "bird",         new List<string>{ "animal", "nature", "wildlife", "song", "park" } },
+            { "fish",         new List<string>{ "animal", "ocean", "water", "boat" } },
+            { "insect",       new List<string>{ "butterfly", "nature", "garden", "animal" } },
+            { "butterfly",    new List<string>{ "insect", "flower", "nature", "garden" } },
+            { "elephant",     new List<string>{ "tiger", "lion", "animal", "wildlife" } },
+            { "tiger",        new List<string>{ "lion", "elephant", "animal", "forest" } },
+            { "lion",         new List<string>{ "tiger", "elephant", "animal", "king" } },
+            { "bear",         new List<string>{ "animal", "forest", "wildlife", "home" } },
+            { "music",        new List<string>{ "song", "guitar", "piano", "voice", "concert" } },
+            { "song",         new List<string>{ "music", "voice", "dance", "concert", "bird" } },
+            { "guitar",       new List<string>{ "music", "song", "piano", "instrument" } },
+            { "piano",        new List<string>{ "music", "song", "drum", "instrument" } },
+            { "drum",         new List<string>{ "piano", "instrument", "dance", "sound" } },
+            { "dance",        new List<string>{ "song", "drum", "party", "festival" } },
+            { "party",        new List<string>{ "dance", "festival", "concert", "music", "hat", "wine" } },
+            { "festival",     new List<string>{ "party", "dance", "concert", "music" } },
+            { "concert",      new List<string>{ "festival", "party", "music", "sound", "song" } },
+            { "sound",        new List<string>{ "drum", "concert", "music", "movie" } },
+            { "melody",       new List<string>{ "rhythm", "song", "music", "voice" } },
+            { "rhythm",       new List<string>{ "melody", "music", "dance", "song" } },
+            { "voice",        new List<string>{ "song", "music", "melody", "concert" } },
+            { "instrument",   new List<string>{ "guitar", "piano", "drum", "music" } },
+            { "coffee",       new List<string>{ "tea", "breakfast", "job", "restaurant" } },
+            { "tea",          new List<string>{ "coffee", "breakfast", "dessert", "home" } },
+            { "water",        new List<string>{ "juice", "ocean", "river", "lake", "boat" } },
+            { "juice",        new List<string>{ "water", "fruit", "breakfast", "dessert" } },
+            { "soda",         new List<string>{ "beer", "party", "concert", "food" } },
+            { "beer",         new List<string>{ "soda", "wine", "party", "restaurant" } },
+            { "wine",         new List<string>{ "beer", "food", "dinner", "party" } },
+            { "smile",        new List<string>{ "laugh", "joy", "love", "heart" } },
+            { "laugh",        new List<string>{ "smile", "joy", "party", "dream" } },
+            { "cry",          new List<string>{ "sadness", "heart", "love", "mind" } },
+            { "joy",          new List<string>{ "smile", "laugh", "love", "party" } },
+            { "sadness",      new List<string>{ "cry", "heart", "mind", "dream" } },
+            { "love",         new List<string>{ "smile", "joy", "heart", "cry" } },
+            { "heart",        new List<string>{ "love", "smile", "cry", "mind" } },
+            { "mind",         new List<string>{ "dream", "knowledge", "cry", "sadness" } },
+            { "dream",        new List<string>{ "mind", "imagination", "hope", "sadness", "laugh", "infinity" } },
+            { "hope",         new List<string>{ "dream", "imagination", "love", "peace" } },
+            { "fear",         new List<string>{ "war", "power", "sadness", "challenge" } },
+            { "peace",        new List<string>{ "hope", "love", "mind", "queen" } },
+            { "war",          new List<string>{ "fear", "power", "king", "queen" } },
+            { "power",        new List<string>{ "war", "king", "queen", "money", "fear" } },
+            { "king",         new List<string>{ "queen", "crown", "throne", "war", "lion" } },
+            { "queen",        new List<string>{ "king", "crown", "throne", "peace" } },
+            { "crown",        new List<string>{ "king", "queen", "throne", "power", "ring" } },
+            { "throne",       new List<string>{ "king", "queen", "crown", "power" } },
+            { "pen",          new List<string>{ "paper", "notebook", "letter", "mail" } },
+            { "pencil",       new List<string>{ "paper", "notebook", "letter", "pen" } },
+            { "paper",        new List<string>{ "pencil", "notebook", "letter", "pen" } },
+            { "notebook",     new List<string>{ "paper", "pencil", "letter", "pen" } },
+            { "letter",       new List<string>{ "mail", "pen", "paper", "notebook" } },
+            { "mail",         new List<string>{ "letter", "pen", "tablet", "app" } },
+            { "phone",        new List<string>{ "tablet", "app", "game", "video" } },
+            { "tablet",       new List<string>{ "phone", "app", "video", "mail" } },
+            { "app",          new List<string>{ "phone", "tablet", "game", "internet", "mail", "technology" } },
+            { "game",         new List<string>{ "phone", "app", "video", "computer", "loser" } },
+            { "video",        new List<string>{ "phone", "tablet", "game", "movie" } },
+            { "camera",       new List<string>{ "photo", "video", "movie", "art" } },
+            { "photo",        new List<string>{ "camera", "sculpture", "statue", "art" } },
+            { "sculpture",    new List<string>{ "photo", "statue", "art", "museum" } },
+            { "statue",       new List<string>{ "sculpture", "building", "art", "museum" } },
+            { "building",     new List<string>{ "house", "apartment", "city", "museum", "statue" } },
+            { "house",        new List<string>{ "home", "apartment", "room", "dog", "garage" } },
+            { "home",         new List<string>{ "house", "room", "garden", "chair", "village", "bird", "bear", "tea", "clean", "sofa" } },
+            { "apartment",    new List<string>{ "house", "home", "room", "building" } },
+            { "room",         new List<string>{ "house", "home", "bed", "chair" } },
+            { "bed",          new List<string>{ "room", "home", "mirror", "sofa" } },
+            { "curtain",      new List<string>{ "window", "room", "house", "light" } },
+            { "window",       new List<string>{ "curtain", "door", "light", "room" } },
+            { "door",         new List<string>{ "window", "room", "house", "building" } },
+            { "floor",        new List<string>{ "room", "house", "wall", "ceiling" } },
+            { "ceiling",      new List<string>{ "room", "floor", "wall", "light" } },
+            { "wall",         new List<string>{ "floor", "room", "ceiling", "door" } },
+            { "light",        new List<string>{ "lamp", "window", "ceiling", "room", "day", "fire" } },
+            { "lamp",         new List<string>{ "light", "table", "bed", "room" } },
+            { "mirror",       new List<string>{ "bed", "house", "art", "room" } },
+            { "holiday",      new List<string>{ "camp", "trip", "party", "festival" } },
+            { "camp",         new List<string>{ "holiday", "tent", "fire", "wood" } },
+            { "tent",         new List<string>{ "camp", "holiday", "fire", "wood" } },
+            { "fire",         new List<string>{ "camp", "smoke", "ash", "light" } },
+            { "smoke",        new List<string>{ "fire", "ash", "wood", "camp" } },
+            { "ash",          new List<string>{ "fire", "smoke", "wood", "tent" } },
+            { "wood",         new List<string>{ "ash", "fire", "camp", "house" } },
+            { "card",         new List<string>{ "gift", "party", "letter", "mail" } },
+            { "gift",         new List<string>{ "card", "holiday", "party", "balloon" } },
+            { "balloon",      new List<string>{ "gift", "party", "holiday", "festival" } },
+            { "candy",        new List<string>{ "cake", "dessert", "snack", "party" } },
+            { "cake",         new List<string>{ "candy", "dessert", "chef", "party" } },
+            { "ice",          new List<string>{ "cream", "dessert", "snack", "cake" } },
+            { "cream",        new List<string>{ "ice", "dessert", "cake", "breakfast" } },
+            { "dessert",      new List<string>{ "cake", "candy", "ice", "chef", "fruit", "juice" } },
+            { "breakfast",    new List<string>{ "tea", "coffee", "juice", "lunch" } },
+            { "lunch",        new List<string>{ "breakfast", "dinner", "food", "restaurant" } },
+            { "supper",       new List<string>{ "dinner", "food", "home", "chef" } },
+            { "snack",        new List<string>{ "candy", "cake", "dessert", "food" } },
+            { "chef",         new List<string>{ "restaurant", "kitchen", "dinner", "dessert" } },
+            { "recipe",       new List<string>{ "chef", "food", "kitchen", "oven" } },
+            { "oven",         new List<string>{ "kitchen", "recipe", "stove", "food" } },
+            { "stove",        new List<string>{ "oven", "microwave", "kitchen", "recipe" } },
+            { "microwave",    new List<string>{ "stove", "oven", "kitchen", "food" } },
+            { "refrigerator", new List<string>{ "kitchen", "food", "recipe", "oven" } },
+            { "clean",        new List<string>{ "wash", "bathroom", "home", "soap" } },
+            { "wash",         new List<string>{ "clean", "bathroom", "shower", "towel" } },
+            { "bathroom",     new List<string>{ "shower", "towel", "clean", "wash" } },
+            { "shower",       new List<string>{ "bathroom", "towel", "wash", "clean" } },
+            { "towel",        new List<string>{ "bathroom", "shower", "wash", "clean" } },
+            { "soap",         new List<string>{ "clean", "bathroom", "wash", "scent" } },
+            { "scent",        new List<string>{ "soap", "perfume", "flower", "clean" } },
+            { "perfume",      new List<string>{ "scent", "clothes", "dress", "shirt" } },
+            { "clothes",      new List<string>{ "shirt", "pants", "dress", "skirt", "perfume" } },
+            { "shirt",        new List<string>{ "clothes", "pants", "dress", "perfume" } },
+            { "pants",        new List<string>{ "clothes", "shirt", "socks", "shoes" } },
+            { "dress",        new List<string>{ "clothes", "skirt", "perfume", "shoes" } },
+            { "skirt",        new List<string>{ "clothes", "dress", "shoes", "perfume" } },
+            { "shoes",        new List<string>{ "pants", "dress", "skirt", "socks" } },
+            { "socks",        new List<string>{ "pants", "shoes", "clothes", "shirt" } },
+            { "hat",          new List<string>{ "glasses", "shirt", "dress", "party" } },
+            { "glasses",      new List<string>{ "hat", "watch", "phone", "tablet" } },
+            { "watch",        new List<string>{ "glasses", "jewelry", "ring", "time" } },
+            { "jewelry",      new List<string>{ "watch", "ring", "necklace", "bracelet" } },
+            { "ring",         new List<string>{ "jewelry", "necklace", "bracelet", "crown" } },
+            { "necklace",     new List<string>{ "jewelry", "ring", "bracelet", "gift" } },
+            { "bracelet",     new List<string>{ "jewelry", "ring", "necklace", "watch" } },
+            { "bag",          new List<string>{ "keys", "phone", "clothes", "mail" } },
+            { "keys",         new List<string>{ "bag", "lock", "door", "house" } },
+            { "lock",         new List<string>{ "keys", "door", "house", "garage" } },
+            { "garage",       new List<string>{ "car", "engine", "lock", "house" } },
+            { "engine",       new List<string>{ "car", "fuel", "garage", "wheel" } },
+            { "wheel",        new List<string>{ "car", "engine", "fuel", "road" } },
+            { "fuel",         new List<string>{ "car", "engine", "wheel", "speed" } },
+            { "speed",        new List<string>{ "fuel", "race", "car", "highway" } },
+            { "race",         new List<string>{ "speed", "winner", "loser", "team" } },
+            { "winner",       new List<string>{ "race", "score", "team", "sport" } },
+            { "loser",        new List<string>{ "race", "score", "team", "game" } },
+            { "score",        new List<string>{ "race", "winner", "loser", "team" } },
+            { "team",         new List<string>{ "race", "winner", "loser", "score" } },
+            { "coach",        new List<string>{ "player", "team", "sport", "game" } },
+            { "player",       new List<string>{ "coach", "team", "sport", "game" } },
+            { "stadium",      new List<string>{ "field", "team", "sport", "game" } },
+            { "field",        new List<string>{ "stadium", "sport", "team", "game" } },
+            { "ball",         new List<string>{ "sport", "game", "score", "player" } },
+            { "goal",         new List<string>{ "ball", "net", "score", "team" } },
+            { "net",          new List<string>{ "goal", "score", "sport", "game" } },
+            { "sport",        new List<string>{ "game", "team", "coach", "exercise", "winner" } },
+            { "exercise",     new List<string>{ "gym", "sport", "workout", "run" } },
+            { "gym",          new List<string>{ "exercise", "workout", "coach", "team" } },
+            { "workout",      new List<string>{ "exercise", "gym", "run", "jog" } },
+            { "run",          new List<string>{ "workout", "jog", "race", "walk", "exercise" } },
+            { "walk",         new List<string>{ "run", "jog", "park", "exercise" } },
+            { "jog",          new List<string>{ "run", "workout", "walk", "exercise" } },
+            { "bicycle",      new List<string>{ "motorcycle", "road", "exercise", "travel" } },
+            { "motorcycle",   new List<string>{ "bicycle", "road", "speed", "travel" } },
+            { "bus",          new List<string>{ "train", "subway", "travel", "city" } },
+            { "train",        new List<string>{ "bus", "subway", "map", "travel" } },
+            { "subway",       new List<string>{ "bus", "train", "map", "city" } },
+            { "map",          new List<string>{ "train", "subway", "travel", "explore" } },
+            { "compass",      new List<string>{ "map", "explore", "travel", "challenge" } },
+            { "explore",      new List<string>{ "compass", "map", "travel", "curiosity" } },
+            { "courage",      new List<string>{ "challenge", "spirit", "energy", "mindset" } },
+            { "challenge",    new List<string>{ "courage", "mindset", "success", "failure", "fear", "compass" } },
+            { "success",      new List<string>{ "challenge", "mindset", "energy", "vision" } },
+            { "failure",      new List<string>{ "challenge", "mindset", "energy", "spirit" } },
+            { "mindset",      new List<string>{ "challenge", "success", "failure", "energy" } },
+            { "energy",       new List<string>{ "mindset", "success", "courage", "spirit" } },
+            { "spirit",       new List<string>{ "courage", "energy", "vision", "failure" } },
+            { "vision",       new List<string>{ "success", "spirit", "mindset", "innovation" } },
+            { "journey",      new List<string>{ "travel", "trip", "explore", "curiosity", "airplane", "time" } },
+            { "curiosity",    new List<string>{ "imagination", "explore", "journey", "creation" } },
+            { "imagination",  new List<string>{ "curiosity", "creation", "dream", "innovation", "hope" } },
+            { "creation",     new List<string>{ "imagination", "innovation", "technology", "science" } },
+            { "innovation",   new List<string>{ "creation", "technology", "science", "vision" } },
+            { "technology",   new List<string>{ "innovation", "science", "computer", "app" } },
+            { "science",      new List<string>{ "technology", "innovation", "universe", "planet" } },
+            { "planet",       new List<string>{ "science", "universe", "world", "country" } },
+            { "universe",     new List<string>{ "science", "planet", "infinity", "time" } },
+            { "infinity",     new List<string>{ "universe", "time", "knowledge", "dream" } }
+        };
+    }
+    
+    private void ChooseStartingWords()
+    {
+        List<string> wordKeys = new List<string>(wordNetwork.Keys);
+        currentPlayerWord = wordKeys[Random.Range(0, wordKeys.Count)];
+        
+        // Set the player's word label
+        playerWordLabel.text = currentPlayerWord;
+        
+        // Find a goal word that's 5 connections away
+        goalWord = FindGoalWord(currentPlayerWord, 5);
+        if (goalWord == null)
+        {
+            Debug.LogError("Could not find a goal word that is 5 connections away.");
+            return;
+        }
+        
+        Debug.Log("Player Word: " + currentPlayerWord);
+        Debug.Log("Goal Word: " + goalWord);
+    }
+    
+    private string FindGoalWord(string word, int depth)
+    {
+        if (depth == 0) return word;
+
+        if (!wordNetwork.ContainsKey(word))
+        {
+            Debug.LogError("Word not found in network: " + word);
+            return null;
+        }
+
+        List<string> connections = wordNetwork[word];
+        string nextWord = connections[Random.Range(0, connections.Count)];
+        return FindGoalWord(nextWord, depth - 1);
+    }
+    
+    IEnumerator SpawnWordKnights()
+    {
+        isSpawning = true;
+        activeKnights.Clear();
+        
+        // Get the related words for the current player word
+        if (!wordNetwork.ContainsKey(currentPlayerWord))
+        {
+            Debug.LogError("Current player word not found in network: " + currentPlayerWord);
+            isSpawning = false;
+            yield break;
+        }
+        
+        List<string> relatedWords = wordNetwork[currentPlayerWord];
+        
+        Debug.Log("Spawning knights with words related to: " + currentPlayerWord);
+        
+        // Spawn a knight for each related word
+        foreach (string word in relatedWords)
+        {
+            // Randomly select a spawn point
+            Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
+            
+            // Spawn the knight
+            GameObject knight = Instantiate(knightPrefab, spawnPoint.position, spawnPoint.rotation);
+            
+            // Set the word above the knight
+            TextMeshPro knightLabel = knight.GetComponentInChildren<TextMeshPro>();
+            if (knightLabel != null)
+            {
+                knightLabel.text = word;
+            }
+            
+            // Set the knight to be on the Enemy layer
+            knight.layer = LayerMask.NameToLayer("Enemy");
+            
+            // Add to active knights list
+            activeKnights.Add(knight);
+            
+            // Wait for the spawn delay
+            yield return new WaitForSeconds(spawnDelay);
+        }
+        
+        isSpawning = false;
+    }
+    
+    // Call this method when a knight is defeated
+    public void KnightDefeated(GameObject knight)
+    {
+        if (activeKnights.Contains(knight))
+        {
+            activeKnights.Remove(knight);
+            Destroy(knight);
+            
+            // Check if only one knight remains after this defeat
+            CheckLastKnightRemaining();
+        }
+    }
+    
+    private void CheckLastKnightRemaining()
+    {
+        if (isSpawning == false) {
+            // Clean up any null references in the list (knights that might have been destroyed another way)
+            activeKnights.RemoveAll(knight => knight == null);
+            
+            // If only one knight remains, start the ascension
+            if (activeKnights.Count == 1)
+            {
+                StartCoroutine(LastKnightAscension(activeKnights[0]));
+            }
+        }
+    }
+    
+    IEnumerator LastKnightAscension(GameObject lastKnight)
+    {
+        //Debug.Log("Last knight ascending!");
+        
+        // Get the word from the last knight
+        TextMeshPro knightLabel = lastKnight.GetComponentInChildren<TextMeshPro>();
+        string knightWord = knightLabel.text;
+        
+        // Find all renderers on the knight for fading
+        Renderer[] renderers = lastKnight.GetComponentsInChildren<Renderer>();
+        
+        // Get initial position
+        Vector3 startPosition = lastKnight.transform.position;
+        Vector3 endPosition = startPosition + new Vector3(0, ascensionHeight, 0);
+        
+        // Disable any physics/colliders
+        Collider[] colliders = lastKnight.GetComponentsInChildren<Collider>();
+        foreach (Collider col in colliders)
+        {
+            col.enabled = false;
+        }
+        
+        Rigidbody rb = lastKnight.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+        }
+        
+        // Ascension movement
+        float elapsedTime = 0;
+        while (elapsedTime < ascensionDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / ascensionDuration;
+            
+            // Smooth ascension with easing
+            float smoothT = Mathf.SmoothStep(0, 1, t);
+            lastKnight.transform.position = Vector3.Lerp(startPosition, endPosition, smoothT);
+            
+            yield return null;
+        }
+        
+        // Fade out
+        elapsedTime = 0;
+        while (elapsedTime < fadeOutDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float alpha = 1 - (elapsedTime / fadeOutDuration);
+            
+            // Apply alpha to all renderers
+            foreach (Renderer rend in renderers)
+            {
+                Color currentColor = rend.material.color;
+                currentColor.a = alpha;
+                rend.material.color = currentColor;
+            }
+            
+            // Also fade the text
+            if (knightLabel != null)
+            {
+                Color textColor = knightLabel.color;
+                textColor.a = alpha;
+                knightLabel.color = textColor;
+            }
+            
+            yield return null;
+        }
+        
+        // Update player's word to match the last knight's word
+        SelectNewWord(knightWord);
+        
+        // Remove from active knights and destroy
+        activeKnights.Remove(lastKnight);
+        Destroy(lastKnight);
+    }
+    
+    // Call this method when a new word is selected
+    public void SelectNewWord(string newWord)
+    {
+        // Update the player's current word
+        currentPlayerWord = newWord;
+        playerWordLabel.text = currentPlayerWord;
+        
+        Debug.Log("Player word changed to: " + currentPlayerWord);
+        
+        // Check if the player has reached the goal word
+        if (currentPlayerWord == goalWord)
+        {
+            Debug.Log("Goal word reached! Game completed!");
+            // Add game completion logic here
+        }
+    }
+    
+    // This method can be called from outside to manually defeat a knight
+    // For example, when the player attacks a knight
+    public void DefeatKnight(GameObject knight)
+    {
+        KnightDefeated(knight);
+    }
+}

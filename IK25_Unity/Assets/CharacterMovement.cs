@@ -43,6 +43,7 @@ public class CharacterMovement : MonoBehaviour
             StartAttack();
         }
         
+        
         // Update attack state
         if (isAttacking)
         {
