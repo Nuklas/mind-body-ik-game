@@ -128,7 +128,7 @@ public class EnemyController : MonoBehaviour
         // Play death animation
         if (animator != null)
         {
-            animator.SetBool("Dead", true);
+            animator.SetTrigger("Die");
         }
         
         // Disable NavMeshAgent
@@ -142,6 +142,6 @@ public class EnemyController : MonoBehaviour
         }
         
         // Destroy after delay
-        Destroy(gameObject, 3f);
+        Destroy(gameObject, 1f);
     }
 }

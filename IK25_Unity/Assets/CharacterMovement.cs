@@ -11,7 +11,6 @@ public class CharacterMovement : MonoBehaviour
     private float attackCooldown = 0f;
     public float attackDuration = 0.5f;
     public float attackCooldownTime = 1f;
-    public float attackRange = 2.5f;
 
     private void Start()
     {
@@ -44,6 +43,7 @@ public class CharacterMovement : MonoBehaviour
             StartAttack();
         }
         
+        
         // Update attack state
         if (isAttacking)
         {
@@ -68,20 +68,7 @@ public class CharacterMovement : MonoBehaviour
         // Optionally reduce movement speed during attack
         // moveSpeed *= 0.5f;
     }
-
-/**    void DealDamage() {
-        // Check if enemy is still in range
-        float distanceToEnemy = Vector3.Distance(transform.position, player.position);
-        if (distanceToPlayer <= attackRange)
-        {
-            // Damage player
-            PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
-            if (playerHealth != null)
-            {
-                playerHealth.TakeDamage(damage);
-            }
-        }
-    }**/
+    
     
     private void EndAttack()
     {
