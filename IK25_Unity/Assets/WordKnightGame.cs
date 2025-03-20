@@ -23,6 +23,7 @@ public class WordKnightGame : MonoBehaviour
     private bool isSpawning = false;
     private TextMeshPro playerWordLabel;
     private List<GameObject> activeKnights = new List<GameObject>();
+    public TMP_Text goalText;
     
     void Start()
     {
@@ -325,8 +326,49 @@ public class WordKnightGame : MonoBehaviour
         
         Debug.Log("Player Word: " + currentPlayerWord);
         Debug.Log("Goal Word: " + goalWord);
+        UpdateGoalText();
     }
-    
+
+    private string FindGoalWord(string startWord, int depth)
+    {
+        if (!wordNetwork.ContainsKey(startWord))
+        {
+            Debug.LogError("Word not found in network: " + startWord);
+            return null;
+        }
+        
+        Queue<(string word, int level, List<string> path)> queue = new Queue<(string, int, List<string>)>();
+        queue.Enqueue((startWord, 0, new List<string> { startWord }));
+        
+        HashSet<string> visited = new HashSet<string>();
+        visited.Add(startWord);
+        
+        while (queue.Count > 0)
+        {
+            var (currentWord, currentLevel, path) = queue.Dequeue();
+            
+            if (currentLevel == depth)
+            {
+                return currentWord;
+            }
+            
+            if (!wordNetwork.ContainsKey(currentWord))
+                continue;
+            
+            foreach (string neighbor in wordNetwork[currentWord])
+            {
+                if (!visited.Contains(neighbor))
+                {
+                    visited.Add(neighbor);
+                    List<string> newPath = new List<string>(path) { neighbor };
+                    queue.Enqueue((neighbor, currentLevel + 1, newPath));
+                }
+            }
+        }
+        
+        return null;
+    }
+    /**
     private string FindGoalWord(string word, int depth)
     {
         if (depth == 0) return word;
@@ -341,7 +383,7 @@ public class WordKnightGame : MonoBehaviour
         string nextWord = connections[Random.Range(0, connections.Count)];
         return FindGoalWord(nextWord, depth - 1);
     }
-    
+    **/
     IEnumerator SpawnWordKnights()
     {
         isSpawning = true;
@@ -424,7 +466,7 @@ public class WordKnightGame : MonoBehaviour
         string knightWord = knightLabel.text;
         
         // Find all renderers on the knight for fading
-        Renderer[] renderers = lastKnight.GetComponentsInChildren<Renderer>();
+        //Renderer[] renderers = lastKnight.GetComponentsInChildren<Renderer>();
         
         // Get initial position
         Vector3 startPosition = lastKnight.transform.position;
@@ -464,6 +506,7 @@ public class WordKnightGame : MonoBehaviour
             elapsedTime += Time.deltaTime;
             float alpha = 1 - (elapsedTime / fadeOutDuration);
             
+            /**
             // Apply alpha to all renderers
             foreach (Renderer rend in renderers)
             {
@@ -479,7 +522,7 @@ public class WordKnightGame : MonoBehaviour
                 textColor.a = alpha;
                 knightLabel.color = textColor;
             }
-            
+            **/
             yield return null;
         }
         
@@ -513,5 +556,17 @@ public class WordKnightGame : MonoBehaviour
     public void DefeatKnight(GameObject knight)
     {
         KnightDefeated(knight);
+    }
+
+    private void UpdateGoalText()
+    {
+        if (goalText != null)
+        {
+            goalText.text = "Goal: " + goalWord;
+        }
+        else
+        {
+            Debug.LogError("Goal Text (TMP) is not assigned in the Inspector!");
+        }
     }
 }
